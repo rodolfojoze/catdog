@@ -1,0 +1,28 @@
+@startuml
+' ER Diagram for Auth module
+entity "User" as User {
+  * id : uuid <<PK>>
+  --
+  name : varchar
+  email : varchar <<UNIQUE>>
+  password_hash : varchar
+  email_verified : boolean
+  created_at : timestamptz
+}
+entity "UserRole" as UserRole {
+  * id : uuid <<PK>>
+  --
+  user_id : uuid <<FK>>
+  role : varchar
+}
+entity "EmailVerificationToken" as EmailVerificationToken {
+  * id : uuid <<PK>>
+  --
+  user_id : uuid <<FK>>
+  token : varchar
+  expires_at : timestamptz
+  created_at : timestamptz
+}
+User ||--o{ UserRole : has
+User ||--o{ EmailVerificationToken : has
+@enduml

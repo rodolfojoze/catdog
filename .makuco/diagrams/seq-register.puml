@@ -1,0 +1,18 @@
+@startuml
+participant Visitor
+participant Frontend
+participant Backend
+participant EmailService as "Supabase Email"
+participant DB as "Postgres/Prisma"
+
+Visitor -> Frontend: Fill register form (name,email,password,confirm)
+Frontend -> Backend: POST /api/auth/register
+Backend -> DB: create user (email_verified=false)
+Backend -> EmailService: send verification email with token
+EmailService -> Visitor: deliver email (user clicks link)
+Visitor -> Frontend: GET /auth/verify-email?token=...
+Frontend -> Backend: GET /api/auth/verify-email?token=...
+Backend -> DB: validate token, set user.email_verified=true
+Backend -> Frontend: 200 OK (account activated)
+Frontend -> Visitor: Show success and link to login
+@enduml

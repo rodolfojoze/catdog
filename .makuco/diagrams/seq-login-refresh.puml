@@ -1,0 +1,30 @@
+@startuml
+participant User
+participant Frontend
+participant Backend
+participant DB
+participant CookieStore as "HTTP-only Cookie"
+
+User -> Frontend: Submit login (email,password)
+Frontend -> Backend: POST /api/auth/login
+Backend -> DB: validate credentials
+alt email not verified
+  Backend -> Frontend: 403 Email not verified
+else success
+  Backend -> CookieStore: Set refresh token (HttpOnly, SameSite)
+  Backend -> Frontend: 200 { accessToken, user }
+  Frontend -> Frontend: store accessToken in memory
+  Frontend -> User: redirect based on role (/admin or /adotante)
+end
+... later ...
+Frontend -> Backend: POST /api/auth/refresh (with cookie)
+Backend -> DB: revalidate roles & token
+alt token valid
+  Backend -> CookieStore: rotate refresh token (set new cookie)
+  Backend -> Frontend: 200 { accessToken }
+  Frontend -> Frontend: update accessToken in memory
+else invalid
+  Backend -> Frontend: 401 Unauthorized
+  Frontend -> User: redirect to /auth/login
+end
+@enduml

@@ -1,0 +1,14 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mark {
+  font-size: 22px;
+}
+
+.text {
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
