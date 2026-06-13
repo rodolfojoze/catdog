@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  ADOTANTE
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String   @db.VarChar(255)
+  email          String   @unique @db.VarChar(255)
+  passwordHash   String   @map("password_hash")
+  emailVerified  Boolean  @default(false) @map("email_verified")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  roles                   UserRole[]
+  emailVerificationTokens EmailVerificationToken[]
+  adoptionRequests        AdoptionRequest[]
+
+  @@map("users")
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  role   Role
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+// ─────────────────────────────────────────────
+// ANIMAIS
+// ─────────────────────────────────────────────
+
+enum Sex {
+  MACHO
+  FEMEA
+}
+
+enum Size {
+  PEQUENO
+  MEDIO
+  GRANDE
+}
+
+model Species {
+  id        String   @id @default(uuid())
+  name      String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  animals Animal[]
+
+  @@map("species")
+}
+
+model Animal {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  speciesId   String   @map("species_id")
+  breed       String?  @db.VarChar(255)
+  age         Int?
+  sex         Sex
+  size        Size
+  description String?  @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  species          Species           @relation(fields: [speciesId], references: [id])
+  photos           AnimalPhoto[]
+  adoptionRequests AdoptionRequest[]
+
+  @@map("animals")
+}
+
+model AnimalPhoto {
+  id        String   @id @default(uuid())
+  animalId  String   @map("animal_id")
+  url       String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  animal Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
+
+  @@map("animal_photos")
+}
+
+// ─────────────────────────────────────────────
+// SOLICITAÇÕES DE ADOÇÃO
+// ─────────────────────────────────────────────
+
+enum HousingType {
+  CASA_COM_QUINTAL
+  CASA_SEM_QUINTAL
+  APARTAMENTO
+}
+
+enum AdoptionStatus {
+  FORMULARIO
+  ENVIO_DOCUMENTACAO
+  ENTREVISTA
+  VISITA_DOMICILIAR
+  APROVACAO_FINAL
+  APROVADO
+  REJEITADO
+}
+
+model AdoptionRequest {
+  id              String         @id @default(uuid())
+  animalId        String         @map("animal_id")
+  userId          String         @map("user_id")
+  adopterName     String         @map("adopter_name") @db.VarChar(255)
+  adopterPhone    String         @map("adopter_phone") @db.VarChar(30)
+  adopterCity     String         @map("adopter_city") @db.VarChar(255)
+  housingType     HousingType    @map("housing_type")
+  status          AdoptionStatus @default(FORMULARIO)
+  internalNotes   String?        @map("internal_notes") @db.Text
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  animal Animal @relation(fields: [animalId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([animalId, userId, status])
+  @@map("adoption_requests")
+}
